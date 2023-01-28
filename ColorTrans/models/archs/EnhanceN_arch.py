@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -34,6 +35,7 @@ class ConditionNet(nn.Module):
     def forward(self, x, mask):
         xpre = x/(torch.mean(x,1).unsqueeze(1)+1e-8)
         mask = torch.cat([mask,mask],1)
+
         x1 = self.conv1(self.convpre(torch.cat([xpre,x,mask],1)))
         x2 = self.conv2(self.down1(x1))
         x3 = self.conv3(self.down2(x2))

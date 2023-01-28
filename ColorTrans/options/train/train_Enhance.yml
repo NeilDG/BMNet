@@ -4,7 +4,7 @@ use_tb_logger: true
 model: sr
 distortion: sr
 scale: 1
-gpu_ids: [1]
+gpu_ids: [0]
 
 #### datasets
 datasets:
@@ -16,7 +16,7 @@ datasets:
     border_mode: false
 #    dataroot: /data/1760921465/dped/iphone/test_data/patches
     cache_keys: ~
-    filelist: /home/jieh/Projects/Shadow/ColorTrans/data/groups_train.txt
+    filelist: ./ColorTrans/data/groups_train.txt
 
     use_shuffle: true
     n_workers: 0  # per GPU
@@ -29,7 +29,7 @@ datasets:
     name: MainNet
     mode: MainNet_val
 #    dataroot: /data/1760921465/dped/iphone/test_data/patches
-    filelist: /home/jieh/Projects/Shadow/ColorTrans/data/groups_test.txt
+    filelist: ./ColorTrans/data/groups_test.txt
 
     batch_size: 1
     use_shuffle: false
@@ -43,8 +43,8 @@ network_G:
 
 #### path
 path:
-  root: /home/jieh/Projects/Shadow/ColorTrans/output
-  results_root: /home/jieh/Projects/Shadow/ColorTrans/output
+  root: ./ColorTrans/output
+  results_root: ./ColorTrans/output
   pretrain: ~
   pretrain_model_G: ~
   strict_load: false
@@ -82,4 +82,4 @@ train:
 #### logger
 logger:
   print_freq: 20
-  save_checkpoint_epoch: !!float 10
+  save_checkpoint_epoch: !!float 1
