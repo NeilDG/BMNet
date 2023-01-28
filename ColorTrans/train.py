@@ -19,7 +19,7 @@ from models import create_model
 def main():
     #### options
     parser = argparse.ArgumentParser()
-    parser.add_argument('--opt', type=str, default='/home/jieh/Projects/Shadow/ColorTrans/options/train/train_Enhance.yml',
+    parser.add_argument('--opt', type=str, default='/ColorTrans/options/train/train_Enhance.yml',
                         help='Path to option YAML file.')
     parser.add_argument('--launcher', choices=['none', 'pytorch'], default='pytorch', help='job launcher')
     parser.add_argument('--local_rank', type=int, default=0)
@@ -44,32 +44,32 @@ def main():
         resume_state = None
 
     #### mkdir and loggers
-    if rank <= 0:  # normal training (rank -1) OR distributed training (rank 0)
-        if resume_state is None:
-            util.mkdir_and_rename(
-                opt['path']['experiments_root'])  # rename experiment folder if exists
-            util.mkdirs((path for key, path in opt['path'].items() if not key == 'experiments_root'
-                         and 'pretrain_model' not in key and 'resume' not in key))
-
-        # config loggers. Before it, the log will not work
-        util.setup_logger('base', opt['path']['log'], 'train_' + opt['name'], level=logging.INFO,
-                          screen=True, tofile=True)
-        logger = logging.getLogger('base')
-        logger.info(option.dict2str(opt))
-        # tensorboard logger
-        if opt['use_tb_logger'] and 'debug' not in opt['name']:
-            version = float(torch.__version__[0:3])
-            if version >= 1.1:  # PyTorch 1.1
-                from torch.utils.tensorboard import SummaryWriter
-            else:
-                logger.info(
-                    'You are using PyTorch {}. Tensorboard will use [tensorboardX]'.format(version))
-                from tensorboardX import SummaryWriter
-            tb_logger = SummaryWriter(log_dir=(os.path.join(opt['path']['root'],'tb_logger',opt['name'])))
-
-    else:
-        util.setup_logger('base', opt['path']['log'], 'train', level=logging.INFO, screen=True)
-        logger = logging.getLogger('base')
+    # if rank <= 0:  # normal training (rank -1) OR distributed training (rank 0)
+    #     if resume_state is None:
+    #         util.mkdir_and_rename(
+    #             opt['path']['experiments_root'])  # rename experiment folder if exists
+    #         util.mkdirs((path for key, path in opt['path'].items() if not key == 'experiments_root'
+    #                      and 'pretrain_model' not in key and 'resume' not in key))
+    #
+    #     # config loggers. Before it, the log will not work
+    #     util.setup_logger('base', opt['path']['log'], 'train_' + opt['name'], level=logging.INFO,
+    #                       screen=True, tofile=True)
+    #     logger = logging.getLogger('base')
+    #     logger.info(option.dict2str(opt))
+    #     # tensorboard logger
+    #     if opt['use_tb_logger'] and 'debug' not in opt['name']:
+    #         version = float(torch.__version__[0:3])
+    #         if version >= 1.1:  # PyTorch 1.1
+    #             from torch.utils.tensorboard import SummaryWriter
+    #         else:
+    #             logger.info(
+    #                 'You are using PyTorch {}. Tensorboard will use [tensorboardX]'.format(version))
+    #             from tensorboardX import SummaryWriter
+    #         tb_logger = SummaryWriter(log_dir=(os.path.join(opt['path']['root'],'tb_logger',opt['name'])))
+    #
+    # else:
+    util.setup_logger('base', opt['path']['log'], 'train', level=logging.INFO, screen=True)
+    logger = logging.getLogger('base')
 
 
 

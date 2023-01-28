@@ -6,11 +6,12 @@ import torch.nn as nn
 from torch.autograd import Variable
 import os
 from torch.nn.parallel import DataParallel, DistributedDataParallel
-import models.networks as networks
-import models.lr_scheduler as lr_scheduler
+import ColorTrans.models.networks as networks
+import ColorTrans.models.lr_scheduler as lr_scheduler
 from .base_model import BaseModel
-from models.loss import CharbonnierLoss,histcal
-from models.loss_new import SSIMLoss,VGGLoss,GradientLoss
+from ColorTrans.models.loss import CharbonnierLoss,histcal
+from ColorTrans.models.loss_new import SSIMLoss,VGGLoss,GradientLoss
+from ColorTrans.models import vgg_loss_model
 import torch.nn.functional as F
 import random
 from metrics.calculate_PSNR_SSIM import psnr_np
@@ -45,7 +46,7 @@ class SIEN_Model(BaseModel):
                 self.cri_ssim = SSIMLoss().to(self.device)
                 self.mse = nn.MSELoss().to(self.device)
                 self.cri_grad = GradientLoss().to(self.device)
-                self.cri_vgg = VGGLoss(id=4).to(self.device)
+                self.cri_vgg = vgg_loss_model.VGGPerceptualLoss().to(self.device)
             elif loss_type == 'l2':
                 self.cri_pix = nn.MSELoss().to(self.device)
                 self.cri_ssim = SSIMLoss().to(self.device)
