@@ -70,7 +70,7 @@ def main():
     ns_istd = "E:/ISTD_Dataset/test/test_C/*.png"
     mask_istd = "E:/ISTD_Dataset/test/test_B/*.png"
     opts = {}
-    opts["img_to_load"] = 1000
+    opts["img_to_load"] = -1
     opts["num_workers"] = 12
     opts["cuda_device"] = "cuda:0"
     train_loader = dataset_loader.load_shadow_train_dataset(rgb_dir_ws, rgb_dir_ns, ws_istd, ns_istd, 96, opts=opts)
