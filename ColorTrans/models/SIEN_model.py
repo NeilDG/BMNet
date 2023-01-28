@@ -27,10 +27,6 @@ class SIEN_Model(BaseModel):
 
         # define network and load pretrained models
         self.netG = networks.define_G(opt).to(self.device)
-        if opt['dist']:
-            self.netG = DistributedDataParallel(self.netG, device_ids=[torch.cuda.current_device()])
-        else:
-            self.netG = DataParallel(self.netG)
         # print network
         self.print_network()
         self.load()

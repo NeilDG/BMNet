@@ -5,16 +5,13 @@ import random
 import logging
 import sys
 sys.path.append('/home/jieh/Projects/Shadow/ColorTrans')
-
-
 import torch
 import torch.multiprocessing as mp
-
 import options.options as option
 from utils import util
 from data import create_dataloader, create_dataset
 from models import create_model
-
+from adapter import dataset_loader
 
 def main():
     #### options
@@ -89,32 +86,49 @@ def main():
 
     #### create train and val dataloader
     # dataset_ratio = 200  # enlarge the size of each epoch
-    for phase, dataset_opt in opt['datasets'].items():
-        if phase == 'train':
-            train_set = create_dataset(opt, dataset_opt)
-            train_size = int(math.ceil(len(train_set) / dataset_opt['batch_size']))
-            total_iters = int(opt['train']['niter'])
-            total_epochs = int(math.ceil(total_iters / train_size))
+    # for phase, dataset_opt in opt['datasets'].items():
+    #     if phase == 'train':
+    #         print("dataset opt: ", opt['datasets'])
+    #         train_set = create_dataset(opt, dataset_opt)
+    #         train_size = int(math.ceil(len(train_set) / dataset_opt['batch_size']))
+    #         total_iters = int(opt['train']['niter'])
+    #         total_epochs = int(math.ceil(total_iters / train_size))
+    #
+    #         train_sampler = None
+    #         train_loader = create_dataloader(train_set, dataset_opt, opt, train_sampler)
+    #         if rank <= 0:
+    #             logger.info('Number of train images: {:,d}, iters: {:,d}'.format(
+    #                 len(train_set), train_size))
+    #             logger.info('Total epochs needed: {:d} for iters {:,d}'.format(
+    #                 total_epochs, total_iters))
+    #     elif phase == 'val':
+    #         val_set = create_dataset(opt, dataset_opt)
+    #         val_loader = create_dataloader(val_set, dataset_opt, opt, None)
+    #         if rank <= 0:
+    #             logger.info('Number of val images in [{:s}]: {:d}'.format(
+    #                 dataset_opt['name'], len(val_set)))
+    #     else:
+    #         raise NotImplementedError('Phase [{:s}] is not recognized.'.format(phase))
+    #
+    # assert train_loader is not None
 
-            train_sampler = None
-            train_loader = create_dataloader(train_set, dataset_opt, opt, train_sampler)
-            if rank <= 0:
-                logger.info('Number of train images: {:,d}, iters: {:,d}'.format(
-                    len(train_set), train_size))
-                logger.info('Total epochs needed: {:d} for iters {:,d}'.format(
-                    total_epochs, total_iters))
-        elif phase == 'val':
-            val_set = create_dataset(opt, dataset_opt)
-            val_loader = create_dataloader(val_set, dataset_opt, opt, None)
-            if rank <= 0:
-                logger.info('Number of val images in [{:s}]: {:d}'.format(
-                    dataset_opt['name'], len(val_set)))
-        else:
-            raise NotImplementedError('Phase [{:s}] is not recognized.'.format(phase))
+    ### data loader
+    rgb_dir_ws = "X:/SynthWeather Dataset 10/{dataset_version}/rgb/*/*.*"
+    rgb_dir_ns = "X:/SynthWeather Dataset 10/{dataset_version}/rgb_noshadows/*/*.*"
+    rgb_dir_ws = rgb_dir_ws.format(dataset_version="v49_places")
+    rgb_dir_ns = rgb_dir_ns.format(dataset_version="v49_places")
 
-    assert train_loader is not None
+    ws_istd = "E:/ISTD_Dataset/test/test_A/*.png"
+    ns_istd = "E:/ISTD_Dataset/test/test_C/*.png"
+    mask_istd = "E:/ISTD_Dataset/test/test_B/*.png"
+    opts = {}
+    opts["img_to_load"] = -1
+    opts["num_workers"] = 12
+    opts["cuda_device"] = "cuda:0"
+    train_loader = dataset_loader.load_shadow_train_dataset(rgb_dir_ws, rgb_dir_ns, ws_istd, ns_istd, 64, opts=opts)
 
     #### create model
+    total_epochs = 10
     model = create_model(opt)
 
     #### resume training
@@ -136,7 +150,6 @@ def main():
     logger.info('Start training from epoch: {:d}, iter: {:d}'.format(start_epoch, current_step))
 
     for epoch in range(start_epoch, total_epochs + 2):
-    #
         total_psnr = 0
         total_psnr_rev = 0
         total_loss = 0

@@ -26,14 +26,14 @@ def create_dataset(opt,dataset_opt):
     mode = dataset_opt['mode']
     # datasets for image restoration
     if mode == 'MainNet_train':
-        from data.SIEN_dataset import DatasetFromFolder as D
+        from ColorTrans.data.SIEN_dataset import DatasetFromFolder as D
 
         dataset = D(upscale_factor=opt['scale'], data_augmentation=dataset_opt['augment'],
                     group_file=dataset_opt['filelist'],
                     patch_size=dataset_opt['IN_size'], black_edges_crop=False, hflip=True, rot=True)
 
     elif mode == 'MainNet_val':
-        from data.SIEN_dataset import DatasetFromFolder as D
+        from ColorTrans.data.SIEN_dataset import DatasetFromFolder as D
         dataset = D(upscale_factor=opt['scale'], data_augmentation=False,
                     group_file=dataset_opt['filelist'],
                     patch_size=None, black_edges_crop=False, hflip=False, rot=False)
