@@ -43,8 +43,8 @@ network_G:
 
 #### path
 path:
-  root: /ColorTrans/output
-  results_root: /ColorTrans/output
+  root: ./ColorTrans/output
+  results_root: ./ColorTrans/output
   pretrain: ~
   pretrain_model_G: ~
   strict_load: false
