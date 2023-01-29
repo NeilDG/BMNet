@@ -6,14 +6,16 @@ import torch.nn as nn
 from torch.autograd import Variable
 import os
 from torch.nn.parallel import DataParallel, DistributedDataParallel
-import models.networks as networks
-import models.lr_scheduler as lr_scheduler
+import MainNet.models.networks as networks
+import MainNet.models.lr_scheduler as lr_scheduler
+
+from ColorTrans.models import vgg_loss_model
 from .base_model import BaseModel
-from models.loss import CharbonnierLoss,histcal
-from models.loss_new import SSIMLoss,VGGLoss,GradientLoss,LabLoss
+from MainNet.models.loss import CharbonnierLoss,histcal
+from MainNet.models.loss_new import SSIMLoss,VGGLoss,GradientLoss,LabLoss
 import torch.nn.functional as F
 import random
-from metrics.calculate_PSNR_SSIM import psnr_np
+from MainNet.metrics.calculate_PSNR_SSIM import psnr_np
 logger = logging.getLogger('base')
 
 
@@ -26,10 +28,6 @@ class SIEN_Model(BaseModel):
 
         # define network and load pretrained models
         self.netG = networks.define_G(opt).to(self.device)
-        if opt['dist']:
-            self.netG = DistributedDataParallel(self.netG, device_ids=[torch.cuda.current_device()])
-        else:
-            self.netG = DataParallel(self.netG)
         # print network
         self.print_network()
         self.load()
@@ -45,7 +43,7 @@ class SIEN_Model(BaseModel):
                 self.cri_ssim = SSIMLoss().to(self.device)
                 self.mse = nn.MSELoss().to(self.device)
                 self.cri_grad = GradientLoss().to(self.device)
-                self.cri_vgg = VGGLoss(id=4).to(self.device)
+                self.cri_vgg = vgg_loss_model.VGGPerceptualLoss().to(self.device)
                 self.cri_lab = LabLoss().to(self.device)
             elif loss_type == 'l2':
                 self.cri_pix = nn.MSELoss().to(self.device)
@@ -195,6 +193,9 @@ class SIEN_Model(BaseModel):
         if need_GT:
             out_dict['GT'] = self.real_H.detach()[0].float().cpu()
         return out_dict
+
+    def get_results(self):
+        return self.fake_H.detach().float().cpu()
 
     def print_network(self):
         s, n = self.get_network_description(self.netG)

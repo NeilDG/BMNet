@@ -4,7 +4,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 import torch.nn.init as init
-from models.archs.arch_util import ConditionNet
+from MainNet.models.archs.arch_util import ConditionNet
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -271,7 +271,7 @@ class InvISPNet(nn.Module):
         operations = []
         # level = 3
         self.condition = ConditionNet()
-        self.condition.load_state_dict(torch.load('/home/jieh/Projects/Shadow/MainNet/pretrain/condition.pth'))
+        self.condition.load_state_dict(torch.load('./MainNet/pretrain/latest_G.pth'))
         for p in self.parameters():
             p.requires_grad = False
 

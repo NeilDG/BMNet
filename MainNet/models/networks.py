@@ -1,6 +1,6 @@
 import torch
-import models.archs.discriminator_vgg_arch as SRGAN_arch
-import models.archs.EnhanceN_arch as EnhanceN_arch
+import MainNet.models.archs.discriminator_vgg_arch as SRGAN_arch
+import MainNet.models.archs.EnhanceN_arch as EnhanceN_arch
 
 
 # Generator

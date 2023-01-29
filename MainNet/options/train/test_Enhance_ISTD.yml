@@ -43,10 +43,10 @@ network_G:
 
 #### path
 path:
-  root: /home/jieh/Projects/Shadow/MainNet/output
-  results_root: /home/jieh/Projects/Shadow/MainNet/output
-  pretrain: /home/jieh/Projects/Shadow/ISTD/output/experiments/FinalOurs/models/0_bestavg.pth
-  pretrain_model_G: /home/jieh/Projects/Shadow/ISTD/output/experiments/FinalOurs/models/0_bestavg.pth
+  root: ./MainNet/output
+  results_root: ./MainNet/output
+  pretrain: ~
+  pretrain_model_G: ./MainNet/output/experiments/STEN/models/latest_G.pth
   strict_load: false
   resume_state: ~
 

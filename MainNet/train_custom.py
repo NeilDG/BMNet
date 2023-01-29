@@ -4,9 +4,12 @@ import argparse
 import random
 import logging
 import sys
-sys.path.append('/home/jieh/Projects/Shadow/ColorTrans')
+sys.path.append('/home/jieh/Projects/Shadow/MainNet')
+
+
 import torch
 import torch.multiprocessing as mp
+
 import options.options as option
 from utils import util
 from data import create_dataloader, create_dataset
@@ -16,7 +19,7 @@ from adapter import dataset_loader
 def main():
     #### options
     parser = argparse.ArgumentParser()
-    parser.add_argument('--opt', type=str, default='/ColorTrans/options/train/train_Enhance.yml',
+    parser.add_argument('--opt', type=str, default='./MainNet/options/train/train_Enhance.yml',
                         help='Path to option YAML file.')
     parser.add_argument('--launcher', choices=['none', 'pytorch'], default='pytorch', help='job launcher')
     parser.add_argument('--local_rank', type=int, default=0)
@@ -29,6 +32,7 @@ def main():
     rank = -1
     print('Disabled distributed training.')
 
+
     #### loading resume state if exists
     if opt['path'].get('resume_state', None):
         # distributed resuming: all load into default GPU
@@ -39,8 +43,10 @@ def main():
     else:
         resume_state = None
 
+    #### mkdir and loggers
     util.setup_logger('base', opt['path']['log'], 'train', level=logging.INFO, screen=True)
     logger = logging.getLogger('base')
+
 
 
     # convert to NoneDict, which returns None for missing keys
@@ -57,6 +63,7 @@ def main():
     # torch.backends.cudnn.benchmark = True
     # torch.backends.cudnn.deterministic = True
 
+    #### create train and val dataloader
     device = torch.device("cuda:0" if (torch.cuda.is_available()) else "cpu")
 
     ### data loader
@@ -72,7 +79,7 @@ def main():
     opts["img_to_load"] = -1
     opts["num_workers"] = 12
     opts["cuda_device"] = "cuda:0"
-    train_loader = dataset_loader.load_shadow_train_dataset(rgb_dir_ws, rgb_dir_ns, ws_istd, ns_istd, 96, opts=opts)
+    train_loader = dataset_loader.load_shadow_train_dataset(rgb_dir_ws, rgb_dir_ns, ws_istd, ns_istd, 10, opts=opts)
 
     #### create model
     total_epochs = 10
@@ -97,6 +104,7 @@ def main():
     logger.info('Start training from epoch: {:d}, iter: {:d}'.format(start_epoch, current_step))
 
     for epoch in range(start_epoch, total_epochs + 2):
+    #
         total_psnr = 0
         total_psnr_rev = 0
         total_loss = 0
@@ -142,17 +150,16 @@ def main():
                 message += '{:s}: {:.4e} '.format('mean_total_loss', mean_total)
                 message += '{:s}: {:} '.format('mesn_psnr', mean_psnr)
                 message += '{:s}: {:} '.format('mesn_psnr_rev', mean_psnr_rev)
-
                 if rank <= 0:
                     logger.info(message)
 
 
-        #### save models and training states
-        if epoch % opt['logger']['save_checkpoint_epoch'] == 0:
-            if rank <= 0:
-                logger.info('Saving models and training states.')
-                model.save(epoch)
-                model.save_training_state(epoch, current_step)
+            #### save models and training states
+            if current_step % 500 == 0:
+                if rank <= 0:
+                    logger.info('Saving models and training states.')
+                    model.save(epoch)
+                    model.save_training_state(epoch, current_step)
 
     if rank <= 0:
         logger.info('Saving the final model.')
