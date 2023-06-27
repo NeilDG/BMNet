@@ -4,6 +4,9 @@ import argparse
 import random
 import logging
 import sys
+
+import numpy as np
+
 sys.path.append('/home/jieh/Projects/Shadow/ColorTrans')
 import torch
 import torch.multiprocessing as mp
@@ -62,12 +65,13 @@ def main():
     ### data loader
     rgb_dir_ws = "X:/SynthWeather Dataset 10/{dataset_version}/rgb/*/*.*"
     rgb_dir_ns = "X:/SynthWeather Dataset 10/{dataset_version}/rgb_noshadows/*/*.*"
-    rgb_dir_ws = rgb_dir_ws.format(dataset_version="v49_places")
-    rgb_dir_ns = rgb_dir_ns.format(dataset_version="v49_places")
+    rgb_dir_ws = rgb_dir_ws.format(dataset_version="v69_places")
+    rgb_dir_ns = rgb_dir_ns.format(dataset_version="v69_places")
 
-    ws_istd = "E:/ISTD_Dataset/test/test_A/*.png"
-    ns_istd = "E:/ISTD_Dataset/test/test_C/*.png"
-    mask_istd = "E:/ISTD_Dataset/test/test_B/*.png"
+    ws_istd = "X:/ISTD_Dataset/test/test_A/*.png"
+    ns_istd = "X:/ISTD_Dataset/test/test_C/*.png"
+    mask_istd = "X:/ISTD_Dataset/test/test_B/*.png"
+
     opts = {}
     opts["img_to_load"] = -1
     opts["num_workers"] = 12
@@ -77,6 +81,11 @@ def main():
     #### create model
     total_epochs = 10
     model = create_model(opt)
+    model_parameters = filter(lambda p: p.requires_grad, model.netG.parameters())
+    params = sum([np.prod(p.size()) for p in model_parameters])
+    print("-----------------------")
+    print("ColorTrans total parameters: ", params)
+    print("-----------------------")
 
     #### resume training
     if resume_state:

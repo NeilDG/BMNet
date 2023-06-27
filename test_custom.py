@@ -28,6 +28,11 @@ def main():
     opts["cuda_device"] = "cuda:0"
 
     model = create_model(opt)
+    model_parameters = filter(lambda p: p.requires_grad, model.netG.parameters())
+    params = sum([np.prod(p.size()) for p in model_parameters])
+    print("-----------------------")
+    print("BMNet total parameters: ", params)
+    print("-----------------------")
 
     #### loading resume state if exists
     if opt['path'].get('resume_state', None):
@@ -39,9 +44,9 @@ def main():
     else:
         resume_state = None
 
-    ws_istd = "E:/ISTD_Dataset/test/test_A/*.png"
-    ns_istd = "E:/ISTD_Dataset/test/test_C/*.png"
-    mask_istd = "E:/ISTD_Dataset/test/test_B/*.png"
+    ws_istd = "X:/ISTD_Dataset/test/test_A/*.png"
+    ns_istd = "X:/ISTD_Dataset/test/test_C/*.png"
+    mask_istd = "X:/ISTD_Dataset/test/test_B/*.png"
     test_loader = dataset_loader.load_istd_dataset(ws_istd, ns_istd, mask_istd, 128, opts)
     save_dir = "./reports/ISTD/"
 
@@ -65,9 +70,9 @@ def main():
             torchvision.utils.save_image(istd_results[j], impath, normalize=True)
             print("Saving " +impath)
 
-    ws_istd = "E:/SRD_Test/srd/shadow/*.jpg"
-    ns_istd = "E:/SRD_Test/srd/shadow_free/*.jpg"
-    mask_istd = "E:/SRD_Test/srd/mask/*.jpg"
+    ws_istd = "X:/SRD_Test/srd/shadow/*.jpg"
+    ns_istd = "X:/SRD_Test/srd/shadow_free/*.jpg"
+    mask_istd = "X:/SRD_Test/srd/mask/*.jpg"
     test_loader = dataset_loader.load_srd_dataset(ws_istd, ns_istd, mask_istd, 128, opts)
     save_dir = "./reports/SRD/"
 

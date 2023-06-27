@@ -46,7 +46,7 @@ path:
   root: ./MainNet/output
   results_root: ./MainNet/output
   pretrain: ~
-  pretrain_model_G: ./MainNet/output/experiments/STEN/models/latest_G.pth
+  pretrain_model_G: ./MainNet/output/experiments/STEN/models/30_G.pth
   strict_load: false
   resume_state: ~
 

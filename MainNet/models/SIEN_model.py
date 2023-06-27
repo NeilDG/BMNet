@@ -195,7 +195,8 @@ class SIEN_Model(BaseModel):
         return out_dict
 
     def get_results(self):
-        return self.fake_H.detach().float().cpu()
+        # return self.fake_H.detach().float().cpu()
+        return self.fake_H.detach()
 
     def print_network(self):
         s, n = self.get_network_description(self.netG)
@@ -210,6 +211,8 @@ class SIEN_Model(BaseModel):
 
     def load(self):
         load_path_G = self.opt['path']['pretrain_model_G']
+        # load_path_G = "./MainNet/output/experiments/STEN/models/10_G.pth" #override
+        print("Load path of model: ", load_path_G)
         if load_path_G is not None:
             logger.info('Loading model for G [{:s}] ...'.format(load_path_G))
             self.load_network(load_path_G, self.netG, self.opt['path']['strict_load'])

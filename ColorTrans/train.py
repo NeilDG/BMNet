@@ -4,6 +4,9 @@ import argparse
 import random
 import logging
 import sys
+
+import numpy as np
+
 sys.path.append('/home/jieh/Projects/Shadow/ColorTrans')
 import torch
 import torch.multiprocessing as mp
