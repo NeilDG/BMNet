@@ -1,3 +1,4 @@
+import itertools
 import os
 import math
 import argparse
@@ -6,20 +7,27 @@ import logging
 import sys
 
 import numpy as np
+import yaml
+from torch import nn
+from yaml import SafeLoader
 
-sys.path.append('/home/jieh/Projects/Shadow/ColorTrans')
+sys.path.append('/home/jieh/Projects/Shadow/MainNet')
+
+
 import torch
 import torch.multiprocessing as mp
+
 import options.options as option
 from utils import util
 from data import create_dataloader, create_dataset
 from models import create_model
 from adapter import dataset_loader
+from utils import plot_utils
 
 def main():
     #### options
     parser = argparse.ArgumentParser()
-    parser.add_argument('--opt', type=str, default='/ColorTrans/options/train/train_Enhance.yml',
+    parser.add_argument('--opt', type=str, default='./MainNet/options/train/train_Enhance.yml',
                         help='Path to option YAML file.')
     parser.add_argument('--launcher', choices=['none', 'pytorch'], default='pytorch', help='job launcher')
     parser.add_argument('--local_rank', type=int, default=0)
@@ -32,6 +40,7 @@ def main():
     rank = -1
     print('Disabled distributed training.')
 
+
     #### loading resume state if exists
     if opt['path'].get('resume_state', None):
         # distributed resuming: all load into default GPU
@@ -42,6 +51,7 @@ def main():
     else:
         resume_state = None
 
+    #### mkdir and loggers
     util.setup_logger('base', opt['path']['log'], 'train', level=logging.INFO, screen=True)
     logger = logging.getLogger('base')
 
@@ -60,32 +70,28 @@ def main():
     # torch.backends.cudnn.benchmark = True
     # torch.backends.cudnn.deterministic = True
 
+    #### create train and val dataloader
     device = torch.device("cuda:0" if (torch.cuda.is_available()) else "cpu")
 
     ### data loader
     rgb_dir_ws = "X:/SynthWeather Dataset 10/{dataset_version}/rgb/*/*.*"
     rgb_dir_ns = "X:/SynthWeather Dataset 10/{dataset_version}/rgb_noshadows/*/*.*"
-    rgb_dir_ws = rgb_dir_ws.format(dataset_version="v69_places")
-    rgb_dir_ns = rgb_dir_ns.format(dataset_version="v69_places")
+    rgb_dir_ws = rgb_dir_ws.format(dataset_version="v49_places")
+    rgb_dir_ns = rgb_dir_ns.format(dataset_version="v49_places")
 
     ws_istd = "X:/ISTD_Dataset/test/test_A/*.png"
     ns_istd = "X:/ISTD_Dataset/test/test_C/*.png"
     mask_istd = "X:/ISTD_Dataset/test/test_B/*.png"
 
     opts = {}
-    opts["img_to_load"] = -1
+    opts["img_to_load"] = 10000
     opts["num_workers"] = 12
     opts["cuda_device"] = "cuda:0"
-    train_loader = dataset_loader.load_shadow_train_dataset(rgb_dir_ws, rgb_dir_ns, ws_istd, ns_istd, 96, opts=opts)
+    train_loader = dataset_loader.load_shadow_train_dataset(rgb_dir_ws, rgb_dir_ns, ws_istd, ns_istd, 10, opts=opts)
+    test_loader_istd = dataset_loader.load_istd_dataset(ws_istd, ns_istd, mask_istd, 10, opts)
 
     #### create model
-    total_epochs = 10
     model = create_model(opt)
-    model_parameters = filter(lambda p: p.requires_grad, model.netG.parameters())
-    params = sum([np.prod(p.size()) for p in model_parameters])
-    print("-----------------------")
-    print("ColorTrans total parameters: ", params)
-    print("-----------------------")
 
     #### resume training
     if resume_state:
@@ -105,7 +111,24 @@ def main():
     #### training
     logger.info('Start training from epoch: {:d}, iter: {:d}'.format(start_epoch, current_step))
 
+    # plot utils
+    plot_loss_path = "./reports/train_test_loss.yaml"
+    l1_loss = nn.L1Loss()
+    if(os.path.exists(plot_loss_path)):
+        with open(plot_loss_path) as f:
+            losses_dict = yaml.load(f, SafeLoader)
+    else:
+        losses_dict = {}
+        losses_dict["train"] = []
+        losses_dict["test_istd"] = []
+
+    print("Losses dict: ", losses_dict["train"])
+    current_step = 32000
+    start_epoch = 30
+    total_epochs = 60
+    print("Set current step to: ", current_step, "Start epoch: ", start_epoch, " Total epochs: ", total_epochs)
     for epoch in range(start_epoch, total_epochs + 2):
+    #
         total_psnr = 0
         total_psnr_rev = 0
         total_loss = 0
@@ -151,17 +174,44 @@ def main():
                 message += '{:s}: {:.4e} '.format('mean_total_loss', mean_total)
                 message += '{:s}: {:} '.format('mesn_psnr', mean_psnr)
                 message += '{:s}: {:} '.format('mesn_psnr_rev', mean_psnr_rev)
-
                 if rank <= 0:
                     logger.info(message)
 
 
-        #### save models and training states
-        if epoch % opt['logger']['save_checkpoint_epoch'] == 0:
-            if rank <= 0:
-                logger.info('Saving models and training states.')
-                model.save(epoch)
-                model.save_training_state(epoch, current_step)
+            #### save models and training states
+            if current_step % 500 == 0:
+                if rank <= 0 and epoch % 5 == 0:
+                    logger.info("Saving models and training states. Epoch: " + str(epoch))
+                    model.save(epoch)
+                    model.save_training_state(epoch, current_step)
+
+                    #plot train-test loss
+                    rgb_ns_like = model.get_results()
+                    train_loss = float(np.round(l1_loss(rgb_ns_like, rgb_ns).item(), 4))
+                    losses_dict["train"].append({current_step : float(train_loss)})
+
+                    _, rgb_ws, rgb_ns, shadow_matte = next(itertools.cycle(test_loader_istd))
+                    rgb_ws = rgb_ws.to(device)
+                    rgb_ns = rgb_ns.to(device)
+                    shadow_matte = shadow_matte.to(device)
+
+                    # test data - ISTD
+                    data = {}
+                    data["LQ"] = rgb_ws
+                    data["GT"] = rgb_ns
+                    data["MASK"] = shadow_matte
+
+                    #### test
+                    model.feed_data(data)
+                    rgb_ns_like = model.get_results()
+                    test_loss_istd = float(np.round(l1_loss(rgb_ns_like, rgb_ns).item(), 4))
+                    losses_dict["test_istd"].append({current_step: test_loss_istd})
+
+                    plot_loss_file = open(plot_loss_path, "w")
+                    yaml.dump(losses_dict, plot_loss_file)
+                    plot_loss_file.close()
+                    print("Dumped train test loss to ", plot_loss_path)
+
 
     if rank <= 0:
         logger.info('Saving the final model.')

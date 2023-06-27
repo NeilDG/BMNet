@@ -46,7 +46,7 @@ path:
   root: ./ColorTrans/output
   results_root: ./ColorTrans/output
   pretrain: ~
-  pretrain_model_G: ~
+  pretrain_model_G: ./ColorTrans/output/experiments/STEN/models/latest_G.pth
   strict_load: false
   resume_state: ~
 

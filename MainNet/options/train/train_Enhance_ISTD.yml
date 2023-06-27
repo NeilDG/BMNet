@@ -43,10 +43,10 @@ network_G:
 
 #### path
 path:
-  root: /home/jieh/Projects/Shadow/MainNet/output
-  results_root: /home/jieh/Projects/Shadow/MainNet/output
+  root: ./MainNet/output
+  results_root: ./MainNet/output
   pretrain: ~
-  pretrain_model_G: ~
+  pretrain_model_G: ./MainNet/output/experiments/STEN/models/30_G.pth
   strict_load: false
   resume_state: ~
 
@@ -84,4 +84,4 @@ train:
 #### logger
 logger:
   print_freq: 20
-  save_checkpoint_epoch: !!float 100
+  save_checkpoint_epoch: !!float 1

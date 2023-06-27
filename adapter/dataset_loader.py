@@ -60,3 +60,49 @@ def load_shadow_train_dataset(ws_path, ns_path, ws_istd_path, ns_istd_path, load
     )
 
     return data_loader
+
+def load_istd_dataset(ws_istd_path, ns_istd_path, mask_istd_path, load_size, opts):
+
+    initial_istd_ws_list = assemble_img_list(ws_istd_path, opts)
+    initial_istd_ns_list = assemble_img_list(ns_istd_path, opts)
+    initial_istd_mask_list = assemble_img_list(mask_istd_path, opts)
+
+    temp_list = list(zip(initial_istd_ws_list, initial_istd_ns_list, initial_istd_mask_list))
+    random.shuffle(temp_list)
+
+    print("Length of images: %d %d %d" % (len(initial_istd_ws_list), len(initial_istd_ns_list), len(initial_istd_mask_list)))
+    img_length = len(initial_istd_ws_list)
+
+    data_loader = torch.utils.data.DataLoader(
+        shadow_datasets.ShadowISTDDataset(img_length, initial_istd_ws_list, initial_istd_ns_list, initial_istd_mask_list, 1),
+        batch_size=load_size,
+        num_workers=1,
+        shuffle=False,
+        pin_memory=True,
+        pin_memory_device=opts["cuda_device"]
+    )
+
+    return data_loader
+
+def load_srd_dataset(ws_istd_path, ns_istd_path, mask_istd_path, load_size, opts):
+
+    initial_istd_ws_list = assemble_img_list(ws_istd_path, opts)
+    initial_istd_ns_list = assemble_img_list(ns_istd_path, opts)
+    initial_istd_mask_list = assemble_img_list(mask_istd_path, opts)
+
+    temp_list = list(zip(initial_istd_ws_list, initial_istd_ns_list, initial_istd_mask_list))
+    random.shuffle(temp_list)
+
+    print("Length of images: %d %d %d" % (len(initial_istd_ws_list), len(initial_istd_ns_list), len(initial_istd_mask_list)))
+    img_length = len(initial_istd_ws_list)
+
+    data_loader = torch.utils.data.DataLoader(
+        shadow_datasets.ShadowSRDDataset(img_length, initial_istd_ws_list, initial_istd_ns_list, initial_istd_mask_list, 1),
+        batch_size=load_size,
+        num_workers=int(opts["num_workers"]),
+        shuffle=False,
+        pin_memory=True,
+        pin_memory_device=opts["cuda_device"]
+    )
+
+    return data_loader

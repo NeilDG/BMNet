@@ -73,7 +73,6 @@ class BaseModel():
 
     def save_network(self, network, network_label, iter_label):
         save_filename = '{}_{}.pth'.format(iter_label, network_label)
-        print("WHERE TO SAVE? ", self.opt['path']['models'])
         save_path = os.path.join(self.opt['path']['models'], save_filename)
         if isinstance(network, nn.DataParallel) or isinstance(network, DistributedDataParallel):
             network = network.module
@@ -83,6 +82,7 @@ class BaseModel():
         torch.save(state_dict, save_path)
 
     def load_network(self, load_path, network, strict=True):
+        print("Attemping to load network: ", load_path)
         if isinstance(network, nn.DataParallel) or isinstance(network, DistributedDataParallel):
             network = network.module
         if os.path.exists(load_path):

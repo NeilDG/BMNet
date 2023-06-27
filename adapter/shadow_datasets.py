@@ -61,7 +61,7 @@ class ShadowTrainDataset(data.Dataset):
         return self.img_length
 
 class ShadowISTDDataset(data.Dataset):
-    def __init__(self, img_length, img_list_a, img_list_b, img_list_c, transform_config, train_mode):
+    def __init__(self, img_length, img_list_a, img_list_b, img_list_c, transform_config):
         self.img_length = img_length
         self.img_list_a = img_list_a
         self.img_list_b = img_list_b
@@ -73,15 +73,9 @@ class ShadowISTDDataset(data.Dataset):
 
         self.initial_op = transforms.Compose([
             transforms.ToPILImage(),
-            transforms.Resize(constants.TEST_IMAGE_SIZE),
-            # transforms.Resize((240, 320)),
+            transforms.Resize((240, 320)),
+            # transforms.Resize((256, 256)),
             transforms.ToTensor()])
-
-        sc_instance = iid_server_config.IIDServerConfig.getInstance()
-        if (train_mode == "train_shadow_matte"):
-            self.network_config = sc_instance.interpret_shadow_matte_params_from_version()
-        else:
-            self.network_config = sc_instance.interpret_shadow_network_params_from_version()
 
     def __getitem__(self, idx):
         file_name = self.img_list_a[idx].split("/")[-1].split(".png")[0]
@@ -96,15 +90,12 @@ class ShadowISTDDataset(data.Dataset):
             rgb_ns = self.initial_op(rgb_ns)
 
             # shadow_mask = cv2.imread(self.img_list_c[idx])
+            # shadow_mask = cv2.cvtColor(shadow_mask, cv2.COLOR_BGR2GRAY)
+            # shadow_mask = self.initial_op(shadow_mask)
 
-            shadow_map = rgb_ns - rgb_ws
-            shadow_matte = kornia.color.rgb_to_grayscale(shadow_map)
-
-            rgb_ws_gray = kornia.color.rgb_to_grayscale(rgb_ws)
-            rgb_ws = self.norm_op(rgb_ws)
-            rgb_ws_gray = self.norm_op(rgb_ws_gray)
-            rgb_ns = self.norm_op(rgb_ns)
-            shadow_matte = self.norm_op(shadow_matte)
+            shadow_mask = rgb_ns - rgb_ws
+            shadow_mask = kornia.color.rgb_to_grayscale(shadow_mask)
+            # shadow_mask = self.initial_op(shadow_mask)
 
         except Exception as e:
             print("Failed to load: ", self.img_list_a[idx], self.img_list_b[idx])
@@ -115,16 +106,17 @@ class ShadowISTDDataset(data.Dataset):
             shadow_mask = None
             shadow_matte = None
 
-        return file_name, rgb_ws, rgb_ns, shadow_matte
+        return file_name, rgb_ws, rgb_ns, shadow_mask
 
     def __len__(self):
         return self.img_length
 
 class ShadowSRDDataset(data.Dataset):
-    def __init__(self, img_length, img_list_a, img_list_b, transform_config, train_mode):
+    def __init__(self, img_length, img_list_a, img_list_b, img_list_c, transform_config):
         self.img_length = img_length
         self.img_list_a = img_list_a
         self.img_list_b = img_list_b
+        self.img_list_c = img_list_c
         self.transform_config = transform_config
 
         self.shadow_op = shadow_map_transforms.ShadowMapTransforms()
@@ -132,15 +124,10 @@ class ShadowSRDDataset(data.Dataset):
 
         self.initial_op = transforms.Compose([
             transforms.ToPILImage(),
-            transforms.Resize(constants.TEST_IMAGE_SIZE),
+            # transforms.Resize(constants.TEST_IMAGE_SIZE),
             # transforms.Resize((160, 210)),
+            transforms.Resize((240, 320)),
             transforms.ToTensor()])
-
-        sc_instance = iid_server_config.IIDServerConfig.getInstance()
-        if (train_mode == "train_shadow_matte"):
-            self.network_config = sc_instance.interpret_shadow_matte_params_from_version()
-        else:
-            self.network_config = sc_instance.interpret_shadow_network_params_from_version()
 
     def __getitem__(self, idx):
         file_name = self.img_list_a[idx].split("/")[-1].split(".")[0]
@@ -154,14 +141,13 @@ class ShadowSRDDataset(data.Dataset):
             rgb_ns = cv2.cvtColor(rgb_ns, cv2.COLOR_BGR2RGB)
             rgb_ns = self.initial_op(rgb_ns)
 
-            shadow_map = rgb_ns - rgb_ws
-            shadow_matte = kornia.color.rgb_to_grayscale(shadow_map)
+            # shadow_mask = cv2.imread(self.img_list_c[idx])
+            # shadow_mask = cv2.cvtColor(shadow_mask, cv2.COLOR_BGR2GRAY)
+            # shadow_mask = self.initial_op(shadow_mask)
 
-            rgb_ws_gray = kornia.color.rgb_to_grayscale(rgb_ws)
-            rgb_ws = self.norm_op(rgb_ws)
-            rgb_ws_gray = self.norm_op(rgb_ws_gray)
-            rgb_ns = self.norm_op(rgb_ns)
-            shadow_matte = self.norm_op(shadow_matte)
+            shadow_mask = rgb_ns - rgb_ws
+            shadow_mask = kornia.color.rgb_to_grayscale(shadow_mask)
+            # shadow_mask = self.initial_op(shadow_mask)
 
         except Exception as e:
             print("Failed to load: ", self.img_list_a[idx], self.img_list_b[idx])
@@ -169,9 +155,10 @@ class ShadowSRDDataset(data.Dataset):
             rgb_ws = None
             rgb_ns = None
             rgb_ws_gray = None
+            shadow_mask = None
             shadow_matte = None
 
-        return file_name, rgb_ws, rgb_ns, shadow_matte
+        return file_name, rgb_ws, rgb_ns, shadow_mask
 
     def __len__(self):
         return self.img_length
