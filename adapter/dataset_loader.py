@@ -106,3 +106,39 @@ def load_srd_dataset(ws_istd_path, ns_istd_path, mask_istd_path, load_size, opts
     )
 
     return data_loader
+
+def load_places_dataset(path, load_size, opts):
+    ws_list = assemble_img_list(path, opts)
+    if(opts["img_to_load"] > 0):
+        ws_list = ws_list[0:opts["img_to_load"]]
+
+    ws_list = ["X:/Places Dataset/Places365_test_00001292.jpg",
+               "X:/Places Dataset/Places365_test_00003500.jpg",
+               "X:/Places Dataset/Places365_test_00004141.jpg",
+               "X:/Places Dataset/Places365_test_00085268.jpg",
+               "X:/Places Dataset/Places365_test_00225331.jpg",
+               "X:/Places Dataset/Places365_test_00230542.jpg",
+               "X:/Places Dataset/Places365_test_00232509.jpg",
+               "X:/Places Dataset/Places365_test_00232710.jpg",
+               "X:/Places Dataset/Places365_test_00232749.jpg",
+               "X:/Places Dataset/Places365_test_00237288.jpg",
+               "X:/Places Dataset/Places365_test_00237182.jpg",
+               "X:/Places Dataset/Places365_test_00294021.jpg",
+               "X:/Places Dataset/Places365_test_00085268.jpg"]
+    # ws_list = ws_list[100000:328497]
+
+    print("Length of images: %d" % (len(ws_list)))
+    img_length = len(ws_list)
+
+    data_loader = torch.utils.data.DataLoader(
+        shadow_datasets.PlacesDataset(img_length, ws_list),
+        batch_size=load_size,
+        num_workers=int(opts["num_workers"]),
+        shuffle=False,
+        pin_memory=True,
+        pin_memory_device=opts["cuda_device"]
+    )
+
+    return data_loader
+
+

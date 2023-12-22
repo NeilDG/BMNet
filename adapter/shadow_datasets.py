@@ -173,13 +173,13 @@ class PlacesDataset(data.Dataset):
             transforms.ToPILImage()])
 
         self.final_transform_op = transforms.Compose([
-            transforms.Resize(constants.TEST_IMAGE_SIZE),
-            transforms.ToTensor(),
-            transforms.Normalize((0.5,), (0.5,))
+            transforms.Resize((512, 512)),
+            transforms.ToTensor()
+            # transforms.Normalize((0.5,), (0.5,))
         ])
 
     def __getitem__(self, idx):
-        file_name = self.img_list_a[idx].split("/")[-1].split(".png")[0]
+        file_name = self.img_list_a[idx].split("/")[-1].split(".jpg")[0]
 
         try:
             rgb_ws = cv2.imread(self.img_list_a[idx])

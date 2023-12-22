@@ -1,5 +1,6 @@
 import argparse
 
+import kornia.color
 import numpy as np
 import torch
 import torch.multiprocessing as mp
@@ -44,58 +45,86 @@ def main():
     else:
         resume_state = None
 
-    ws_istd = "X:/ISTD_Dataset/test/test_A/*.png"
-    ns_istd = "X:/ISTD_Dataset/test/test_C/*.png"
-    mask_istd = "X:/ISTD_Dataset/test/test_B/*.png"
-    test_loader = dataset_loader.load_istd_dataset(ws_istd, ns_istd, mask_istd, 128, opts)
-    save_dir = "./reports/ISTD/"
+    # ws_istd = "X:/ISTD_Dataset/test/test_A/*.png"
+    # ns_istd = "X:/ISTD_Dataset/test/test_C/*.png"
+    # mask_istd = "X:/ISTD_Dataset/test/test_B/*.png"
+    # test_loader = dataset_loader.load_istd_dataset(ws_istd, ns_istd, mask_istd, 128, opts)
+    # save_dir = "./reports/ISTD/"
+    #
+    # for i, (file_name, rgb_ws, rgb_ns, shadow_mask) in enumerate(test_loader, 0):
+    #     rgb_ws = rgb_ws.to(device)
+    #     rgb_ns = rgb_ns.to(device)
+    #     shadow_mask = shadow_mask.to(device)
+    #
+    #     train_data = {}
+    #     train_data["LQ"] = rgb_ws
+    #     train_data["GT"] = rgb_ns
+    #     train_data["MASK"] = shadow_mask
+    #
+    #     model.feed_data(train_data)
+    #     model.test()
+    #
+    #     istd_results = model.get_results()
+    #
+    #     for j in range(0, np.size(file_name)):
+    #         impath = save_dir + file_name[j] + ".png"
+    #         torchvision.utils.save_image(istd_results[j], impath, normalize=True)
+    #         print("Saving " +impath)
+    #
+    # ws_istd = "X:/SRD_Test/srd/shadow/*.jpg"
+    # ns_istd = "X:/SRD_Test/srd/shadow_free/*.jpg"
+    # mask_istd = "X:/SRD_Test/srd/mask/*.jpg"
+    # test_loader = dataset_loader.load_srd_dataset(ws_istd, ns_istd, mask_istd, 128, opts)
+    # save_dir = "./reports/SRD/"
+    #
+    # for i, (file_name, rgb_ws, rgb_ns, shadow_mask) in enumerate(test_loader, 0):
+    #     rgb_ws = rgb_ws.to(device)
+    #     rgb_ns = rgb_ns.to(device)
+    #     shadow_mask = shadow_mask.to(device)
+    #
+    #     train_data = {}
+    #     train_data["LQ"] = rgb_ws
+    #     train_data["GT"] = rgb_ns
+    #     train_data["MASK"] = shadow_mask
+    #
+    #     model.feed_data(train_data)
+    #     model.test()
+    #
+    #     srd_results = model.get_results()
+    #     resize_op = torchvision.transforms.Resize((160, 210), torchvision.transforms.InterpolationMode.BICUBIC)
+    #     srd_results = resize_op(srd_results)
+    #
+    #     for j in range(0, np.size(file_name)):
+    #         impath = save_dir + file_name[j] + ".png"
+    #         torchvision.utils.save_image(srd_results[j], impath, normalize=True)
+    #         print("Saving " + impath)
 
-    for i, (file_name, rgb_ws, rgb_ns, shadow_mask) in enumerate(test_loader, 0):
+    opts["img_to_load"] = -1
+    # ws_places = "X:/Places Dataset/*.jpg"
+    ws_places = "X:/Places Dataset/Places365_test_00230542.jpg"
+    test_loader = dataset_loader.load_places_dataset(ws_places, 64, opts)
+    save_dir = "./reports/Places/"
+
+    for i, (file_name, rgb_ws) in enumerate(test_loader, 0):
         rgb_ws = rgb_ws.to(device)
-        rgb_ns = rgb_ns.to(device)
-        shadow_mask = shadow_mask.to(device)
 
         train_data = {}
         train_data["LQ"] = rgb_ws
-        train_data["GT"] = rgb_ns
-        train_data["MASK"] = shadow_mask
+        train_data["GT"] = rgb_ws
+        sm_matte = kornia.color.rgb_to_grayscale(rgb_ws)
+        sm_matte = torch.isfinite(sm_matte) & (sm_matte > 0.0)
+        train_data["MASK"] = sm_matte
 
         model.feed_data(train_data)
         model.test()
 
-        istd_results = model.get_results()
+        places_results = model.get_results()
+        # resize_op = torchvision.transforms.Resize((160, 210), torchvision.transforms.InterpolationMode.BICUBIC)
+        # srd_results = resize_op(srd_results)
 
         for j in range(0, np.size(file_name)):
-            impath = save_dir + file_name[j] + ".png"
-            torchvision.utils.save_image(istd_results[j], impath, normalize=True)
-            print("Saving " +impath)
-
-    ws_istd = "X:/SRD_Test/srd/shadow/*.jpg"
-    ns_istd = "X:/SRD_Test/srd/shadow_free/*.jpg"
-    mask_istd = "X:/SRD_Test/srd/mask/*.jpg"
-    test_loader = dataset_loader.load_srd_dataset(ws_istd, ns_istd, mask_istd, 128, opts)
-    save_dir = "./reports/SRD/"
-
-    for i, (file_name, rgb_ws, rgb_ns, shadow_mask) in enumerate(test_loader, 0):
-        rgb_ws = rgb_ws.to(device)
-        rgb_ns = rgb_ns.to(device)
-        shadow_mask = shadow_mask.to(device)
-
-        train_data = {}
-        train_data["LQ"] = rgb_ws
-        train_data["GT"] = rgb_ns
-        train_data["MASK"] = shadow_mask
-
-        model.feed_data(train_data)
-        model.test()
-
-        srd_results = model.get_results()
-        resize_op = torchvision.transforms.Resize((160, 210), torchvision.transforms.InterpolationMode.BICUBIC)
-        srd_results = resize_op(srd_results)
-
-        for j in range(0, np.size(file_name)):
-            impath = save_dir + file_name[j] + ".png"
-            torchvision.utils.save_image(srd_results[j], impath, normalize=True)
+            impath = save_dir + file_name[j] + ".jpg"
+            torchvision.utils.save_image(places_results[j], impath, normalize=True)
             print("Saving " + impath)
 
 
