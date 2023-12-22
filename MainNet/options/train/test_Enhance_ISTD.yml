@@ -46,7 +46,8 @@ path:
   root: ./MainNet/output
   results_root: ./MainNet/output
   pretrain: ~
-  pretrain_model_G: ./MainNet/output/experiments/STEN/models/60_G.pth #override this
+#  pretrain_model_G: ./MainNet/output/experiments/STEN/models/60_G.pth #override this
+  pretrain_model_G: ./MainNet/pretrain/ISTD.pth #override this
   strict_load: false
   resume_state: ~
 

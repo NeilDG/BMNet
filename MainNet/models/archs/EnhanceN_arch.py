@@ -271,7 +271,7 @@ class InvISPNet(nn.Module):
         operations = []
         # level = 3
         self.condition = ConditionNet()
-        self.condition.load_state_dict(torch.load('./MainNet/pretrain/latest_G.pth'))
+        self.condition.load_state_dict(torch.load('./MainNet/pretrain/condition.pth'))
         for p in self.parameters():
             p.requires_grad = False
 
